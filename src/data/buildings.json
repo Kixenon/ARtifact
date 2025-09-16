@@ -1,0 +1,44 @@
+[
+  {
+    "id": "hk_city_hall",
+    "name": "Hong Kong City Hall",
+    "latitude": 22.2819,
+    "longitude": 114.1613,
+    "year": 1962,
+    "description": "A modernist building that serves as a cultural center, featuring concert halls and exhibition spaces. It was one of the first major public buildings constructed after WWII.",
+    "audioFile": "city_hall.mp3",
+    "historicalFacts": [
+      "Designed by Ron Phillips and Alan Fitch",
+      "First air-conditioned public building in Hong Kong",
+      "Houses the city's marriage registry"
+    ]
+  },
+  {
+    "id": "former_legislative_council",
+    "name": "Former Legislative Council Building",
+    "latitude": 22.2783,
+    "longitude": 114.1603,
+    "year": 1912,
+    "description": "A neoclassical building that housed Hong Kong's legislature until 2011. Now serves as the Court of Final Appeal.",
+    "audioFile": "legislative_council.mp3",
+    "historicalFacts": [
+      "Built during British colonial period",
+      "Survived Japanese occupation during WWII",
+      "Features distinctive dome architecture"
+    ]
+  },
+  {
+    "id": "man_mo_temple",
+    "name": "Man Mo Temple",
+    "latitude": 22.2816,
+    "longitude": 114.1486,
+    "year": 1847,
+    "description": "A traditional Chinese temple dedicated to the gods of literature and war. Famous for its giant incense coils.",
+    "audioFile": "man_mo_temple.mp3",
+    "historicalFacts": [
+      "One of Hong Kong's oldest temples",
+      "Features massive hanging incense coils",
+      "Dedicated to Man Cheong and Mo Tai"
+    ]
+  }
+]

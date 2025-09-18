@@ -1,15 +1,15 @@
+import AntDesign from "@expo/vector-icons/AntDesign";
+import Feather from "@expo/vector-icons/Feather";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import {
   CameraMode,
   CameraType,
   CameraView,
   useCameraPermissions,
 } from "expo-camera";
+import { Image } from "expo-image";
 import { useRef, useState } from "react";
 import { Button, Pressable, StyleSheet, Text, View } from "react-native";
-import { Image } from "expo-image";
-import AntDesign from "@expo/vector-icons/AntDesign";
-import Feather from "@expo/vector-icons/Feather";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 
 export default function App() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -23,6 +23,7 @@ export default function App() {
     return null;
   }
 
+  // ask for permission to use camera
   if (!permission.granted) {
     return (
       <View style={styles.container}>
@@ -35,6 +36,7 @@ export default function App() {
   }
 
   const takePicture = async () => {
+    // the ref is quite literally what it sounds like, a reference to the camera view
     const photo = await ref.current?.takePictureAsync();
     if (photo?.uri) setUri(photo.uri);
   };
@@ -59,6 +61,8 @@ export default function App() {
   };
 
   const renderPicture = (uri: string) => {
+    // uri is a path to the image file
+    // <View> component sets up the basic viewbox, and <Image> component sets up the image viewer lol
     return (
       <View>
         <Image

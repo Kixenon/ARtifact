@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 export default function ResultScreen() {
   const params = useLocalSearchParams<{ analysis?: string, place?: string }>();
@@ -11,15 +12,15 @@ export default function ResultScreen() {
     <View style={styles.container}>
       <View style={styles.handle} />
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Analysis</Text>
+        <View style={styles.headerRow}>
+          <Pressable onPress={() => router.back()} hitSlop={10}>
+            <Ionicons name="return-up-back" size={24} color="#fff" />
+          </Pressable>
+          <Text style={styles.title}>Analysis</Text>
+        </View>
         {place ? <Text style={styles.subtitle}>{place}</Text> : null}
         <Text style={styles.body}>{analysis}</Text>
       </ScrollView>
-      <View style={styles.footer}>
-        <Pressable onPress={() => router.back()}>
-          <View style={styles.closeBtn} />
-        </Pressable>
-      </View>
     </View>
   );
 }
@@ -40,13 +41,18 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 100,
+    paddingBottom: 40,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 4,
   },
   title: {
     color: '#fff',
     fontSize: 22,
     fontWeight: '600',
-    marginBottom: 4,
   },
   subtitle: {
     color: '#9aa0a6',
@@ -57,18 +63,5 @@ const styles = StyleSheet.create({
     color: '#ddd',
     fontSize: 16,
     lineHeight: 22,
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 30,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  closeBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#fff',
   },
 });

@@ -1,6 +1,6 @@
 import { CameraMode, CameraType, CameraView, useCameraPermissions } from "expo-camera";
 import { useRef, useState } from "react";
-import { Pressable, StyleSheet, View, Text } from "react-native";
+import { Pressable, StyleSheet, View, Text, Image } from "react-native";
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 
@@ -13,6 +13,8 @@ export default function Tab() {
   const [mode] = useState<CameraMode>("picture");
   const [facing] = useState<CameraType>("back");
   const [loading, setLoading] = useState(false);
+  const [snapshotUri, setSnapshotUri] = useState<string | null>(null);
+  const isAnalyzingRef = useRef(false);
 
   if (!cameraPermission || !locationPermission) {
     return null;
@@ -28,62 +30,93 @@ export default function Tab() {
     return null;
   }
 
-  const reverseGeocode = async (coords: Location.LocationObjectCoords) => {
+  const withTimeout = async <T,>(promise: Promise<T>, ms: number, onTimeout?: () => void): Promise<T> => {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => setTimeout(() => { onTimeout?.(); reject(new Error('timeout')); }, ms))
+    ]) as T;
+  };
+
+  const getLocation = async (): Promise<Location.LocationObject | null> => {
     try {
-      const [place] = await Location.reverseGeocodeAsync({ latitude: coords.latitude, longitude: coords.longitude });
-      if (!place) return null;
-      const parts = [place.name, place.street, place.city, place.region, place.postalCode, place.country].filter(Boolean);
-      return parts.join(', ');
+      // 1) Try last known location (fast, may be stale but good enough for context)
+      const last = await Location.getLastKnownPositionAsync();
+      if (last) return last;
+    } catch {}
+    try {
+      // 2) Fall back to a fresh read with a slightly longer timeout
+      return await withTimeout(Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }), 7000);
     } catch (e) {
-      console.warn('Reverse geocoding failed', e);
+      console.warn('Fresh location read failed/timed out');
       return null;
     }
   };
 
-  const analyzeImage = async (photoUri: string, location: Location.LocationObject) => {
-    setLoading(true);
+  const reverseGeocode = async (coords: Location.LocationObjectCoords) => {
     try {
-      const place = await reverseGeocode(location.coords);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1800));
-      const analysis = `Image analysis at ${location.coords.latitude.toFixed(5)}, ${location.coords.longitude.toFixed(5)}${place ? ` (${place})` : ''}`;
+      const [place] = await withTimeout(Location.reverseGeocodeAsync({ latitude: coords.latitude, longitude: coords.longitude }), 3000);
+      if (!place) return null;
+      const parts = [place.name, place.street, place.city, place.region, place.postalCode, place.country].filter(Boolean);
+      return parts.join(', ');
+    } catch (e) {
+      console.warn('Reverse geocoding failed or timed out');
+      return null;
+    }
+  };
+
+  const analyzeImage = async (photoUri: string, location: Location.LocationObject | null) => {
+    try {
+      const place = location ? await reverseGeocode(location.coords) : null;
+      await withTimeout(new Promise(resolve => setTimeout(resolve, 1800)), 5000);
+      const coordsPart = location ? `${location.coords.latitude.toFixed(5)}, ${location.coords.longitude.toFixed(5)}` : 'Unknown coordinates';
+      const analysis = `Image analysis at ${coordsPart}${place ? ` (${place})` : ''}`;
       router.push({ pathname: '/result', params: { analysis, place: place ?? '' } });
     } catch (err) {
-      console.warn('Analysis failed', err);
+      console.warn('Analysis failed or timed out', err);
+      const analysis = 'Image analysis unavailable (timeout)';
+      router.push({ pathname: '/result', params: { analysis, place: '' } });
     } finally {
       setLoading(false);
+      setSnapshotUri(null);
+      isAnalyzingRef.current = false;
     }
   };
 
   const takePicture = async () => {
+    if (isAnalyzingRef.current) return;
     const photo = await cameraRef.current?.takePictureAsync();
     if (photo?.uri) {
-      try {
-        const location = await Location.getCurrentPositionAsync({});
-        await analyzeImage(photo.uri, location);
-      } catch (err) {
-        console.warn('Failed getting location or analyzing', err);
-      }
+      isAnalyzingRef.current = true;
+      setSnapshotUri(photo.uri);
+      setLoading(true);
+      const loc = await getLocation();
+      await analyzeImage(photo.uri, loc);
     }
   };
 
   return (
     <View style={styles.root}>
-      <CameraView
-        style={styles.camera}
-        ref={cameraRef}
-        mode={mode}
-        facing={facing}
-        mute={false}
-        responsiveOrientationWhenOrientationLocked
-      />
+      {!snapshotUri && (
+        <CameraView
+          style={styles.camera}
+          ref={cameraRef}
+          mode={mode}
+          facing={facing}
+          mute={false}
+          responsiveOrientationWhenOrientationLocked
+        />
+      )}
+      {snapshotUri && (
+        <Image source={{ uri: snapshotUri }} style={styles.camera} resizeMode="cover" />
+      )}
+
       <View style={styles.shutterContainer}>
-        <Pressable onPress={takePicture}>
+        <Pressable onPress={takePicture} disabled={loading || isAnalyzingRef.current}>
           {({ pressed }) => (
             <View
               style={[
                 styles.shutterBtn,
-                { opacity: pressed ? 0.5 : 1 },
+                { opacity: (loading || isAnalyzingRef.current) ? 0.3 : pressed ? 0.5 : 1 },
               ]}
             >
               <View style={styles.shutterBtnInner} />
@@ -91,6 +124,7 @@ export default function Tab() {
           )}
         </Pressable>
       </View>
+
       {loading && (
         <View style={styles.loadingOverlay}>
           <View style={styles.loadingSign}>

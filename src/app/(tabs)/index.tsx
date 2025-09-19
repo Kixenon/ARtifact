@@ -28,13 +28,26 @@ export default function Tab() {
     return null;
   }
 
+  const reverseGeocode = async (coords: Location.LocationObjectCoords) => {
+    try {
+      const [place] = await Location.reverseGeocodeAsync({ latitude: coords.latitude, longitude: coords.longitude });
+      if (!place) return null;
+      const parts = [place.name, place.street, place.city, place.region, place.postalCode, place.country].filter(Boolean);
+      return parts.join(', ');
+    } catch (e) {
+      console.warn('Reverse geocoding failed', e);
+      return null;
+    }
+  };
+
   const analyzeImage = async (photoUri: string, location: Location.LocationObject) => {
     setLoading(true);
     try {
+      const place = await reverseGeocode(location.coords);
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1800));
-      const analysis = `Analysis for image at lat: ${location.coords.latitude}, lon: ${location.coords.longitude}`;
-      router.push({ pathname: '/result', params: { analysis } });
+      const analysis = `Image analysis at ${location.coords.latitude.toFixed(5)}, ${location.coords.longitude.toFixed(5)}${place ? ` (${place})` : ''}`;
+      router.push({ pathname: '/result', params: { analysis, place: place ?? '' } });
     } catch (err) {
       console.warn('Analysis failed', err);
     } finally {

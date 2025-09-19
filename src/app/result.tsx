@@ -2,15 +2,17 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
 
 export default function ResultScreen() {
-  const params = useLocalSearchParams<{ analysis?: string }>();
+  const params = useLocalSearchParams<{ analysis?: string, place?: string }>();
   const router = useRouter();
   const analysis = params.analysis ?? 'No analysis available';
+  const place = params.place;
 
   return (
     <View style={styles.container}>
       <View style={styles.handle} />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Analysis</Text>
+        {place ? <Text style={styles.subtitle}>{place}</Text> : null}
         <Text style={styles.body}>{analysis}</Text>
       </ScrollView>
       <View style={styles.footer}>
@@ -44,6 +46,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 22,
     fontWeight: '600',
+    marginBottom: 4,
+  },
+  subtitle: {
+    color: '#9aa0a6',
+    fontSize: 14,
     marginBottom: 12,
   },
   body: {

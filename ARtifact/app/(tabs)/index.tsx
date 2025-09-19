@@ -9,36 +9,84 @@ import {
 } from "expo-camera";
 import { Image } from "expo-image";
 import { useRef, useState } from "react";
-import { Button, Pressable, StyleSheet, Text, View } from "react-native";
+import { Button, Pressable, StyleSheet, Text, View, ActivityIndicator } from "react-native";
+import * as Location from 'expo-location';
 
-export default function App() {
-  const [permission, requestPermission] = useCameraPermissions();
+export default function Tab() {
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const [locationPermission, requestLocationPermission] = Location.useForegroundPermissions();
+
   const ref = useRef<CameraView>(null);
   const [uri, setUri] = useState<string | null>(null);
   const [mode, setMode] = useState<CameraMode>("picture");
   const [facing, setFacing] = useState<CameraType>("back");
   const [recording, setRecording] = useState(false);
+  const [analysis, setAnalysis] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  if (!permission) {
+  if (!cameraPermission || !locationPermission) {
     return null;
   }
 
   // ask for permission to use camera
-  if (!permission.granted) {
+  if (!cameraPermission.granted) {
     return (
       <View style={styles.container}>
         <Text style={{ textAlign: "center" }}>
           We need your permission to use the camera
         </Text>
-        <Button onPress={requestPermission} title="Grant permission" />
+        <Button onPress={requestCameraPermission} title="Grant camera permission" />
       </View>
     );
   }
 
+  // ask for permission to use location
+  if (!locationPermission.granted) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ textAlign: "center" }}>
+          We need your permission to access your location
+        </Text>
+        <Button onPress={requestLocationPermission} title="Grant location permission" />
+      </View>
+    );
+  }
+
+  const analyzeImage = async (photoUri: string, location: Location.LocationObject) => {
+    setLoading(true);
+    setAnalysis(null);
+    console.log('Analyzing image:', photoUri, 'at location:', location.coords);
+
+    // TODO: Implement the API call to AI service.
+    // Likely use FormData to send the image and location.
+    // For example:
+    // const formData = new FormData();
+    // formData.append('image', { uri: photoUri, name: 'photo.jpg', type: 'image/jpeg' });
+    // formData.append('latitude', location.coords.latitude.toString());
+    // formData.append('longitude', location.coords.longitude.toString());
+    //
+    // const response = await fetch('YOUR_AI_API_ENDPOINT', {
+    //   method: 'POST',
+    //   body: formData,
+    // });
+    // const result = await response.json();
+    // setAnalysis(result.analysis);
+
+    // Placeholder for demonstration
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    setAnalysis(`Analysis for image at lat: ${location.coords.latitude}, lon: ${location.coords.longitude}`);
+    setLoading(false);
+  };
+
   const takePicture = async () => {
-    // the ref is quite literally what it sounds like, a reference to the camera view
     const photo = await ref.current?.takePictureAsync();
-    if (photo?.uri) setUri(photo.uri);
+    if (photo?.uri) {
+      setUri(photo.uri);
+      const location = await Location.getCurrentPositionAsync({});
+      if (location) {
+        analyzeImage(photo.uri, location);
+      }
+    }
   };
 
   const recordVideo = async () => {
@@ -61,16 +109,16 @@ export default function App() {
   };
 
   const renderPicture = (uri: string) => {
-    // uri is a path to the image file
-    // <View> component sets up the basic viewbox, and <Image> component sets up the image viewer lol
     return (
-      <View>
+      <View style={styles.container}>
         <Image
           source={{ uri }}
           contentFit="contain"
           style={{ width: 300, aspectRatio: 1 }}
         />
-        <Button onPress={() => setUri(null)} title="Take another picture" />
+        {loading && <ActivityIndicator size="large" color="#0000ff" />}
+        {analysis && <Text style={styles.analysisText}>{analysis}</Text>}
+        <Button onPress={() => { setUri(null); setAnalysis(null); }} title="Take another picture" />
       </View>
     );
   };
@@ -163,5 +211,10 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 50,
+  },
+  analysisText: {
+    margin: 20,
+    fontSize: 16,
+    textAlign: 'center',
   },
 });

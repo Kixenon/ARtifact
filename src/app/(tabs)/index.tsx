@@ -3,6 +3,9 @@ import { useRef, useState } from "react";
 import { Pressable, StyleSheet, View, Text, Image } from "react-native";
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
+import * as FileSystem from 'expo-file-system';
+import {readAsStringAsync, EncodingType} from "expo-file-system/legacy"
+
 
 export default function Tab() {
   const router = useRouter();
@@ -15,6 +18,8 @@ export default function Tab() {
   const [loading, setLoading] = useState(false);
   const [snapshotUri, setSnapshotUri] = useState<string | null>(null);
   const isAnalyzingRef = useRef(false);
+
+  const AI_API_KEY = process.env.EXPO_PUBLIC_OPEN_ROUTER_API_KEY;
 
   if (!cameraPermission || !locationPermission) {
     return null;
@@ -67,9 +72,60 @@ export default function Tab() {
   const analyzeImage = async (photoUri: string, location: Location.LocationObject | null) => {
     try {
       const place = location ? await reverseGeocode(location.coords) : null;
+      let analysis = "None";
       await withTimeout(new Promise(resolve => setTimeout(resolve, 1800)), 5000);
-      const coordsPart = location ? `${location.coords.latitude.toFixed(5)}, ${location.coords.longitude.toFixed(5)}` : 'Unknown coordinates';
-      const analysis = `Image analysis at ${coordsPart}${place ? ` (${place})` : ''}`;
+      let coordsPart = location ? `${location.coords.latitude.toFixed(5)}, ${location.coords.longitude.toFixed(5)}` : 'Unknown coordinates';
+
+      // Ask AI
+      const base64 = await readAsStringAsync(photoUri, {
+        encoding: EncodingType.Base64,
+      });
+      if (place) {
+        coordsPart += ` (${place})`;
+      }
+      const userMessageContent = [
+        {
+          type: "text",
+          text: `You are a experienced tour guide. Carefully examine this image taken at ${coordsPart}. Introduce the location including its history, architecture, and what;s so special about this place. Also, you dont need to include the coordinates in your response`,
+        },
+        {
+          type: "image_url",
+          image_url: {
+            url: `data:image/jpeg;base64,${base64}`,
+          },
+        },
+      ];
+      const payload = {
+        model: "x-ai/grok-4-fast:free",
+        messages: [
+          {
+            role: "user",
+            content: userMessageContent,
+          },
+        ],
+        max_tokens: 1024,
+      };
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${AI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`OpenRouter API Error ${response.status}: ${errorBody}`);
+      }
+      const data = await response.json();
+
+      analysis = data.choices?.[0]?.message?.content;
+
+      if (!analysis) {
+        throw new Error("No content returned from AI model");
+      }
+      // const analysis = `Image analysis at ${coordsPart}${place ? ` (${place})` : ''}`;
       router.push({ pathname: '/result', params: { analysis, place: place ?? '' } });
     } catch (err) {
       console.warn('Analysis failed or timed out', err);

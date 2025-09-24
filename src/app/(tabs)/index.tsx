@@ -1,10 +1,13 @@
 import { CameraMode, CameraType, CameraView, useCameraPermissions } from "expo-camera";
 import { useRef, useState } from "react";
 import { Pressable, StyleSheet, View, Text, Image } from "react-native";
+import { Colors } from "../../ui/colors";
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import * as FileSystem from 'expo-file-system';
 import {readAsStringAsync, EncodingType} from "expo-file-system/legacy"
+import { readBestEffortLocation, reverseGeocode } from '../../services/location';
+import { fetchNearbyFirstTitle } from '../../services/wiki';
+import { withTimeout } from '../../utils/async';
 
 
 export default function Tab() {
@@ -35,39 +38,8 @@ export default function Tab() {
     return null;
   }
 
-  const withTimeout = async <T,>(promise: Promise<T>, ms: number, onTimeout?: () => void): Promise<T> => {
-    return await Promise.race([
-      promise,
-      new Promise<T>((_, reject) => setTimeout(() => { onTimeout?.(); reject(new Error('timeout')); }, ms))
-    ]) as T;
-  };
+  
 
-  const getLocation = async (): Promise<Location.LocationObject | null> => {
-    try {
-      // 1) Try last known location (fast, may be stale but good enough for context)
-      const last = await Location.getLastKnownPositionAsync();
-      if (last) return last;
-    } catch {}
-    try {
-      // 2) Fall back to a fresh read with a slightly longer timeout
-      return await withTimeout(Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }), 7000);
-    } catch (e) {
-      console.warn('Fresh location read failed/timed out');
-      return null;
-    }
-  };
-
-  const reverseGeocode = async (coords: Location.LocationObjectCoords) => {
-    try {
-      const [place] = await withTimeout(Location.reverseGeocodeAsync({ latitude: coords.latitude, longitude: coords.longitude }), 3000);
-      if (!place) return null;
-      const parts = [place.name, place.street, place.city, place.region, place.postalCode, place.country].filter(Boolean);
-      return parts.join(', ');
-    } catch (e) {
-      console.warn('Reverse geocoding failed or timed out');
-      return null;
-    }
-  };
 
   const analyzeImage = async (photoUri: string, location: Location.LocationObject | null) => {
     try {
@@ -83,10 +55,12 @@ export default function Tab() {
       if (place) {
         coordsPart += ` (${place})`;
       }
+      const nearbyTitle = location ? await fetchNearbyFirstTitle(location.coords.latitude, location.coords.longitude) : null;
+
       const userMessageContent = [
         {
           type: "text",
-          text: `You are a experienced tour guide. Carefully examine this image taken at ${coordsPart}. Introduce the location including its history, architecture, and what;s so special about this place. Also, you dont need to include the coordinates in your response`,
+          text: `You are an experienced tour guide. Carefully examine this image taken at ${coordsPart}. If relevant, the nearby landmark could be: ${nearbyTitle ?? 'unknown'}. Introduce the place including history, architecture, and what is special. Do not include raw coordinates in your response.`,
         },
         {
           type: "image_url",
@@ -145,7 +119,7 @@ export default function Tab() {
       isAnalyzingRef.current = true;
       setSnapshotUri(photo.uri);
       setLoading(true);
-      const loc = await getLocation();
+      const loc = await readBestEffortLocation();
       await analyzeImage(photo.uri, loc);
     }
   };
@@ -184,7 +158,7 @@ export default function Tab() {
       {loading && (
         <View style={styles.loadingOverlay}>
           <View style={styles.loadingSign}>
-            <Text style={styles.loadingText}>Analyzing...</Text>
+            <Text style={styles.loadingText}>Analyzing…</Text>
           </View>
         </View>
       )}
@@ -195,7 +169,7 @@ export default function Tab() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: "#000",
+    backgroundColor: Colors.background,
   },
   camera: StyleSheet.absoluteFillObject,
   shutterContainer: {
@@ -208,8 +182,8 @@ const styles = StyleSheet.create({
   },
   shutterBtn: {
     backgroundColor: "transparent",
-    borderWidth: 5,
-    borderColor: "white",
+    borderWidth: 4,
+    borderColor: Colors.text,
     width: 85,
     height: 85,
     borderRadius: 45,
@@ -220,11 +194,11 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 50,
-    backgroundColor: "white",
+    backgroundColor: Colors.text,
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: Colors.overlay,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -232,12 +206,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: '#0b0b0bcc',
     borderWidth: 1,
-    borderColor: '#444',
+    borderColor: '#333',
   },
   loadingText: {
-    color: '#fff',
+    color: Colors.text,
     fontSize: 16,
   },
 });

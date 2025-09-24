@@ -1,31 +1,42 @@
-# ARtifact — AI‑Powered Interactive Tour Guide
+# ARtifact — AI Tour Guide
 
-ARtifact is a mobile application that acts as an interactive, AI-powered tour guide. It allows tourists to point their phone's camera at a building, temple, or street to learn about its history and significance in real-time.
+ARtifact is a minimal mobile app that turns your camera into a tour guide. Snap a photo of a landmark to get context, nearby points of interest, and quick translation tools while traveling.
 
-## The Problem
+## Features
+- Lens (Camera AI)
+- Planner
+- Translation
 
-Tourists often walk past historically or culturally significant locations without realizing their importance. Traditional guidebooks can be clunky, and pre-recorded audio tours are often rigid and non-interactive.
+## Setup
+1) Install:
+```bash
+cd src
+npm install
+npx install-expo-modules@latest
+```
 
-## The Solution
+2) Local env (gitignored). Create `src/.env.local`:
+```bash
+EXPO_PUBLIC_OPEN_ROUTER_API_KEY=sk-or-...
+EXPO_PUBLIC_GOOGLE_TRANSLATE_API_KEY=optional-google-key
+EXPO_PUBLIC_LIBRE_TRANSLATE_URL=https://libretranslate.com/translate
+```
 
-ARtifact offers a seamless and interactive way to explore new places. Here's how it works:
+3) Run:
+```bash
+npx expo start
+```
 
-*   **Real-time Identification:** The app uses computer vision to identify the location from your photo in real-time.
-*   **Instant Information:** The AI provides a detailed story and key facts about the place. For example: "You're looking at the Man Mo Temple, one of the oldest in Hong Kong..."
-*   **Interactive Q&A:** You can ask follow-up questions conversationally, such as "Why is there so much smoke inside?" or "Tell me a famous story associated with this temple." The AI provides answers in real-time, allowing for a dynamic and personalized tour.
+Grant camera and location permissions when prompted.
 
-## Quick Start
+## Tech
+- Expo Router, React Native
+- Camera: `expo-camera`
+- Location: `expo-location`
+- AI: OpenRouter chat completions
+- Data helpers: Wikipedia REST & Geosearch
+- Translate: Google Translate API or LibreTranslate fallback
 
-1.  **Install dependencies:**
-    ```bash
-    cd src
-    npm install
-    npx install-expo-modules@latest
-    ```
-
-2.  **Run the app:**
-    ```bash
-    npx expo start
-    ```
-
-    You can run the app in a development build, an Android emulator, an iOS simulator, or with Expo Go. Remember to grant camera and location permissions when prompted.
+## Notes
+- Env keys prefixed with `EXPO_PUBLIC_` are available to the client code.
+- `.env.local` and `src/.env` are loaded via `src/app.config.ts`.

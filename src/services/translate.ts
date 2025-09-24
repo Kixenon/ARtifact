@@ -12,7 +12,7 @@ export async function translateText(text: string, options: TranslateOptions): Pr
       if (resp.ok) {
         const data = await resp.json();
         const translated = data?.data?.translations?.[0]?.translatedText;
-        if (translated) return translated;
+        if (translated) return decodeHtmlEntities(String(translated));
       }
     } catch {}
   }
@@ -36,7 +36,7 @@ export async function translateText(text: string, options: TranslateOptions): Pr
       });
       if (r1.ok) {
         const data = await r1.json();
-        const t = data?.translatedText || data?.translation || data?.translated_text;
+        const t = data?.translatedText || data?.translation || data?.translated_text || data?.translations?.[0]?.text;
         if (t) return t as string;
       }
     } catch (e) { lastError = e; }
@@ -51,13 +51,34 @@ export async function translateText(text: string, options: TranslateOptions): Pr
       });
       if (r2.ok) {
         const data = await r2.json();
-        const t = data?.translatedText || data?.translation || data?.translated_text;
+        const t = data?.translatedText || data?.translation || data?.translated_text || data?.translations?.[0]?.text;
         if (t) return t as string;
       }
     } catch (e) { lastError = e; }
   }
 
+  // Try MyMemory as last resort
+  try {
+    const src = options.source || 'auto';
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${encodeURIComponent(src)}|${encodeURIComponent(options.target)}`;
+    const r3 = await fetch(url);
+    if (r3.ok) {
+      const data = await r3.json();
+      const t = data?.responseData?.translatedText;
+      if (t) return t as string;
+    }
+  } catch (e) { lastError = e; }
+
   throw new Error('Translation failed' + (lastError ? `: ${String((lastError as any)?.message || lastError)}` : ''));
+}
+
+function decodeHtmlEntities(input: string): string {
+  return input
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
 }
 
 

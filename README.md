@@ -10,7 +10,6 @@ ARtifact is a minimal mobile app that turns your camera into a tour guide. Snap 
 ## Setup
 1) Install:
 ```bash
-cd src
 npm install
 npx install-expo-modules@latest
 ```
@@ -18,7 +17,9 @@ npx install-expo-modules@latest
 2) Local env (gitignored). Create `src/.env.local`:
 ```bash
 EXPO_PUBLIC_OPEN_ROUTER_API_KEY=sk-or-...
-EXPO_PUBLIC_GOOGLE_TRANSLATE_API_KEY=optional-google-key
+# Optional but recommended for translation reliability:
+EXPO_PUBLIC_GOOGLE_TRANSLATE_API_KEY=your-google-key
+# Or point at a reliable LibreTranslate instance (optional)
 EXPO_PUBLIC_LIBRE_TRANSLATE_URL=https://libretranslate.com/translate
 ```
 
@@ -38,5 +39,5 @@ Grant camera and location permissions when prompted.
 - Translate: Google Translate API or LibreTranslate fallback
 
 ## Notes
-- Env keys prefixed with `EXPO_PUBLIC_` are available to the client code.
-- `.env.local` and `src/.env` are loaded via `src/app.config.ts`.
+- Env keys prefixed with `EXPO_PUBLIC_` are available to client code.
+- Clipboard: on web we use `navigator.clipboard`. On native, system share/copy can be added later if needed.

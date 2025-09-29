@@ -38,9 +38,6 @@ export default function Tab() {
     return null;
   }
 
-  
-
-
   const analyzeImage = async (photoUri: string, location: Location.LocationObject | null) => {
     try {
       const place = location ? await reverseGeocode(location.coords) : null;
@@ -60,7 +57,16 @@ export default function Tab() {
       const userMessageContent = [
         {
           type: "text",
-          text: `You are an experienced tour guide. Carefully examine this image taken at ${coordsPart}. If relevant, the nearby landmark could be: ${nearbyTitle ?? 'unknown'}. Introduce the place including history, architecture, and what is special. Do not include raw coordinates in your response.`,
+          text: `You are an experienced tour guide. Carefully examine and describe this image.
+
+Use proper formatting using markdown, but be concise.
+
+The image is taken at ${coordsPart}, a potential nearby landmark could be: ${nearbyTitle ?? 'unknown'}.
+
+Do not include raw coordinates in your response.
+
+If there is a landmark that could be seen in the image:
+Properly introduce the history, architecture, fun facts, etc.`,
         },
         {
           type: "image_url",

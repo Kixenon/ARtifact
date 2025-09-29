@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, Pressable, ScrollView, Linking } from 'react-na
 import { Colors } from '../ui/colors';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useState } from 'react';
+import Markdown from 'react-native-markdown-display';
 
 export default function ResultScreen() {
   const params = useLocalSearchParams<{ analysis?: string, place?: string }>();
@@ -42,7 +43,7 @@ export default function ResultScreen() {
           <Text style={styles.title}>Analysis</Text>
         </View>
         {place ? <Text style={styles.subtitle}>{place}</Text> : null}
-        <Text style={styles.body}>{analysis}</Text>
+        <Markdown style={markdownStyles}>{analysis}</Markdown>
         {wiki ? (
           <View style={styles.wikiBox}>
             <Text style={styles.wikiTitle}>Wikipedia summary</Text>
@@ -93,11 +94,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 12,
   },
-  body: {
-    color: Colors.text,
-    fontSize: 16,
-    lineHeight: 22,
-  },
   wikiBox: {
     marginTop: 20,
     backgroundColor: Colors.surface,
@@ -118,5 +114,43 @@ const styles = StyleSheet.create({
   wikiLink: {
     color: '#58a6ff',
     marginTop: 8,
+  },
+});
+
+
+const markdownStyles = StyleSheet.create({
+  body: {
+    color: Colors.text,
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  heading1: {
+    fontSize: 24,
+    color: Colors.text,
+    marginTop: 10,
+    marginBottom: 5,
+    fontWeight: '600',
+  },
+  heading2: {
+    fontSize: 20,
+    color: Colors.text,
+    marginTop: 8,
+    marginBottom: 4,
+    fontWeight: '600',
+  },
+  list_item: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 5,
+  },
+  bullet_list_icon: {
+    color: Colors.textMuted,
+    marginRight: 8,
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  link: {
+    color: '#58a6ff',
+    textDecorationLine: 'underline',
   },
 });

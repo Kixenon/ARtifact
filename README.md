@@ -12,6 +12,7 @@ ARtifact transforms your smartphone camera into a personal AI tour guide. Simply
 ## Setup
 1) **Install Dependencies:**
 ```bash
+cd src
 npm install
 npx install-expo-modules@latest
 ```

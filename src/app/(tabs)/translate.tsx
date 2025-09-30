@@ -8,12 +8,11 @@ export default function TranslateScreen() {
   const [sourceText, setSourceText] = useState('Hello, where is the nearest train station?');
   const [targetText, setTargetText] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sourceLang, setSourceLang] = useState('auto');
+  const [sourceLang, setSourceLang] = useState('en');
   const [targetLang, setTargetLang] = useState('ja');
   const [openPicker, setOpenPicker] = useState<null | 'source' | 'target'>(null);
 
   const languages = useMemo(() => ([
-    { code: 'auto', label: 'Auto-detect' },
     { code: 'en', label: 'English' },
     { code: 'es', label: 'Spanish' },
     { code: 'fr', label: 'French' },
@@ -33,7 +32,7 @@ export default function TranslateScreen() {
   const translate = async () => {
     setLoading(true);
     try {
-      const res = await translateText(sourceText.trim(), { target: targetLang, source: sourceLang !== 'auto' ? sourceLang : undefined });
+      const res = await translateText(sourceText.trim(), { target: targetLang, source: sourceLang });
       setTargetText(res);
       setError(null);
     } finally {
@@ -45,7 +44,7 @@ export default function TranslateScreen() {
     setSourceText(targetText);
     setTargetText(sourceText);
     setSourceLang(targetLang);
-    setTargetLang(sourceLang === 'auto' ? 'auto' : sourceLang);
+    setTargetLang(sourceLang);
   };
 
   const labelFor = (code: string) => languages.find(l => l.code === code)?.label || code;

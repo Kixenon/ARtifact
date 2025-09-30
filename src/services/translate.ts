@@ -23,7 +23,7 @@ export async function translateText(text: string, options: TranslateOptions): Pr
     'https://translate.astian.org/translate',
   ].filter(Boolean) as string[];
 
-  const payload = { q: text, source: options.source || 'auto', target: options.target, format: 'text' };
+  const payload = { q: text, source: options.source || 'en', target: options.target, format: 'text' };
   let lastError: unknown = undefined;
 
   for (const url of endpoints) {

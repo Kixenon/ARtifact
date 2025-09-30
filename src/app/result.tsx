@@ -19,7 +19,9 @@ export default function ResultScreen() {
       try {
         const topic = place || analysis.split('\n')[0].slice(0, 80);
         if (!topic) return;
-        const resp = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topic)}`);
+        const resp = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topic)}`, {
+          headers: { 'User-Agent': 'ARtifact/1.0' },
+        });
         if (!resp.ok) return;
         const data = await resp.json();
         if (active) {

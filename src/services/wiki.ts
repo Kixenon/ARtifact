@@ -1,13 +1,17 @@
+const WIKI_HEADERS = {
+  'User-Agent': 'ARtifact/1.0',
+};
+
 export async function searchWikipediaNearby(latitude: number, longitude: number) {
   const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&list=geosearch&gscoord=${latitude}|${longitude}&gsradius=10000&gslimit=20&origin=*`;
-  const resp = await fetch(url);
+  const resp = await fetch(url, { headers: WIKI_HEADERS });
   if (!resp.ok) throw new Error('Failed to query Wikipedia');
   const data = await resp.json();
-  return (data?.query?.geosearch ?? []) as Array<{ pageid: number; title: string; lat: number; lon: number; dist: number }>; 
+  return (data?.query?.geosearch ?? []) as Array<{ pageid: number; title: string; lat: number; lon: number; dist: number }>;
 }
 
 export async function fetchWikipediaSummary(title: string) {
-  const resp = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
+  const resp = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`, { headers: WIKI_HEADERS });
   if (!resp.ok) return null;
   return await resp.json();
 }
